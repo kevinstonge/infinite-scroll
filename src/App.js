@@ -10,31 +10,32 @@ function App() {
   const [ListItems, setListItems] = useState(createListItems());
   const [isUpdating, setIsUpdating] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("... loading more ...");
-  const scrollBoxLastChild = useRef(null);
+
   const addListItems = () => {
     setListItems([...ListItems, ...createListItems()]);
   };
-  const observerCallback = (entries) => {
-    if (entries[0].isIntersecting && !isUpdating && ListItems.length < 150) {
+  const scrollBoxLastChild = useRef(null);
+
+  const handleScroll = (e) => {
+    const top = scrollBoxLastChild.current.getBoundingClientRect().top;
+    const winHeight = window.innerHeight;
+    if (top < winHeight && !isUpdating) {
       setIsUpdating(true);
       addListItems();
       setTimeout(() => {
         setIsUpdating(false);
       }, 1000);
     }
-    if (ListItems.length === 50) {
-      setLoadingMessage("nothing more to load");
-    }
   };
-  const observer = new IntersectionObserver(observerCallback);
+
   useEffect(() => {
-    scrollBoxLastChild && observer.observe(scrollBoxLastChild.current);
-  }, [observer]);
+    scrollBoxLastChild && console.log(scrollBoxLastChild);
+  }, [scrollBoxLastChild]);
 
   return (
     <div className="container">
       <header>number of items in state: {ListItems.length}</header>
-      <div className="scrollBox">
+      <div className="scrollBox" onScroll={handleScroll}>
         {ListItems.map((item, index) => {
           return (
             <p key={`${item}-${index}`}>{`paragraph element for ${item}`}</p>
