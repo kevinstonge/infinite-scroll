@@ -1,49 +1,65 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import "./App.css";
 /// maybe try this: https://medium.com/@saravananr_93203/infinite-scroll-in-react-made-easy-with-intersection-observer-33bdb5fa9cf6
-function App() {
-  const createListItems = () => {
-    return new Array(5)
-      .fill("")
-      .map((e) => `item #${Math.floor(Math.random() * 10000)}`);
-  };
-  const [ListItems, setListItems] = useState(createListItems());
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("... loading more ...");
-  const scrollBoxLastChild = useRef(null);
-  const addListItems = () => {
-    setListItems([...ListItems, ...createListItems()]);
-  };
-  const observerCallback = (entries) => {
-    if (entries[0].isIntersecting && !isUpdating && ListItems.length < 150) {
-      setIsUpdating(true);
-      addListItems();
-      setTimeout(() => {
-        setIsUpdating(false);
-      }, 1000);
-    }
-    if (ListItems.length === 50) {
-      setLoadingMessage("nothing more to load");
-    }
-  };
-  const observer = new IntersectionObserver(observerCallback);
-  useEffect(() => {
-    scrollBoxLastChild && observer.observe(scrollBoxLastChild.current);
-  }, [observer]);
+const createListItems = () => {
+  return new Array(5)
+    .fill("")
+    .map((e) => `item #${Math.floor(Math.random() * 10000)}`);
+};
+class App extends React.Component {
+  constructor() {
+    super();
+    this.scrollBoxLastChild = React.createRef(null);
+    this.state = {
+      listItems: createListItems(),
+      loadingMessage: "... loading more ...",
+      isUpdating: false,
+    };
+  }
+  observerCallback = (entries) => {
+    console.log("callback20", entries[0]);
+    if (
+      entries[0].isIntersecting &&
+      !this.state.isUpdating &&
+      this.state.listItems.length < 150
+    ) {
+      this.setState(
+        {
+          isUpdating: true,
+          listItems: [...this.state.listItems, ...createListItems()],
+        },
+        () => {
+          console.log("callback31");
 
-  return (
-    <div className="container">
-      <header>number of items in state: {ListItems.length}</header>
-      <div className="scrollBox">
-        {ListItems.map((item, index) => {
-          return (
-            <p key={`${item}-${index}`}>{`paragraph element for ${item}`}</p>
-          );
-        })}
-        <p ref={scrollBoxLastChild}>{loadingMessage}</p>
+          this.setState({ isUpdating: false });
+        }
+      );
+    }
+    if (this.state.listItems.length === 50) {
+      this.setState({ loadingMessage: "nothing more to load" });
+    }
+  };
+  observer = new IntersectionObserver(this.observerCallback);
+  componentDidMount() {
+    console.log("mount");
+    this.observer.observe(this.scrollBoxLastChild.current);
+  }
+
+  render() {
+    return (
+      <div className="container">
+        <header>number of items in state: {this.state.listItems.length}</header>
+        <div className="scrollBox">
+          {this.state.listItems.map((item, index) => {
+            return (
+              <p key={`${item}-${index}`}>{`paragraph element for ${item}`}</p>
+            );
+          })}
+          <p ref={this.scrollBoxLastChild}>{this.state.loadingMessage}</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 export default App;
